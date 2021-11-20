@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "$CADDYFILE_CONTENT" > /srv/Caddyfile
+
+$@

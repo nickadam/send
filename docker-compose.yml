@@ -1,0 +1,57 @@
+version: '3.7'
+services:
+  send:
+    image: nickadam/send:1
+    build:
+      context: ./send
+      dockerfile: Dockerfile
+    volumes:
+      - type: volume
+        source: uploads
+        target: /uploads
+    environment:
+      NODE_ENV: production
+      REDIS_HOST: redis
+      BASE_URL: https://localhost
+      FILE_DIR: /uploads
+      EXPIRE_TIMES_SECONDS: 3600,86400,604800,2592000
+      DEFAULT_EXPIRE_SECONDS: 604800
+      MAX_EXPIRE_SECONDS: 2592000
+      MAX_FILE_SIZE: 10737418240
+      DEFAULT_DOWNLOADS: 5
+
+  redis:
+    image: redis:latest
+    volumes:
+      - type: volume
+        source: redis
+        target: /data
+
+  caddy:
+    image: nickadam/caddy-env:1
+    build:
+      context: ./caddy-env
+      dockerfile: Dockerfile
+    volumes:
+      - type: volume
+        source: caddy
+        target: /data
+    command: caddy run
+    environment:
+      CADDYFILE_CONTENT: |
+        https://localhost
+        reverse_proxy http://send:1443
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+
+volumes:
+  uploads: {}
+  redis: {}
+  caddy: {}
